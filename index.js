@@ -14,7 +14,7 @@ app.use(function (req, res, next) {
 });
 
 app.use(session({
-    secret: "secret",
+    secret: "secret_key",
     resave: false,
     saveUninitialized: true,
 }))
