@@ -18,11 +18,12 @@ model User {
   username       String
   email          String
   password       String
-  profilePicture String   @default("")
-  coverPicture   String   @default("")
-  PoR            String
-  isAdmin        Boolean
-  lastUpdated    DateTime @default(now())  
+  profilePicture String?  @default("")
+  coverPicture   String?  @default("")
+  RASmember      Boolean  @default(false)
+  PoR            String?
+  isAdmin        Boolean  @default(false)
+  lastUpdated    DateTime @default(now())
 }
 
 model Event {
@@ -30,5 +31,5 @@ model Event {
   title       String
   description String
   image       String
-  lastUpdated String  
+  lastUpdated String
 }
