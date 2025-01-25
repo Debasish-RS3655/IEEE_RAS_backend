@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma';
 import { Router } from 'express';
+import { isAuthenticated, isAdmin } from '../middlewares/auth'; // Assuming you have this middleware for authentication
 
 const eventRouter = Router();
 
@@ -27,8 +28,8 @@ eventRouter.get('/:eventId', async (req, res) => {
     }
 });
 
-// Create a new event
-eventRouter.post('/', async (req, res) => {
+// Create a new event (Admins only)
+eventRouter.post('/', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const { title, description, image, lastUpdated } = req.body;
 
@@ -44,15 +45,15 @@ eventRouter.post('/', async (req, res) => {
                 lastUpdated,
             },
         });
+
         return res.status(201).json({ data: newEvent });
-        
     } catch (err) {
         return res.status(500).send({ error: { message: 'Internal Server Error.' } });
     }
 });
 
 // Update an event by ID
-eventRouter.put('/:eventId', async (req, res) => {
+eventRouter.put('/:eventId', isAuthenticated, async (req, res) => {
     try {
         const { eventId } = req.params;
         const { title, description, image, lastUpdated } = req.body;
@@ -78,8 +79,8 @@ eventRouter.put('/:eventId', async (req, res) => {
     }
 });
 
-// Delete an event by ID
-eventRouter.delete('/:eventId', async (req, res) => {
+// Delete an event by ID (Admins only)
+eventRouter.delete('/:eventId', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const { eventId } = req.params;
 
