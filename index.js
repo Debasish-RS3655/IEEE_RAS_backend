@@ -66,3 +66,5 @@ app.use(passport.session());
 app.use('/auth', authRouter);
 app.use('/events', eventRouter);
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+app.listen(8080, () => console.log('IEEE RAS Server running.'));
