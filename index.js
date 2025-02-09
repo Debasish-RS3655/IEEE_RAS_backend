@@ -18,6 +18,8 @@ import helmet from "helmet";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const port = process.env.PORT || 8080;
+
 // Passport Local Strategy
 passport.use(new LocalStrategy(async (username, password, done) => {
     try {
@@ -80,4 +82,4 @@ app.use('/events', eventRouter);
 app.use('/upload', coverPictureRouter);
 app.use('/files', express.static(path.join(__dirname, 'uploads')));
 
-app.listen(8080, () => console.log('IEEE RAS Server running.'));
+app.listen(port, () => console.log('IEEE RAS Server running.'));
