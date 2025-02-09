@@ -4,12 +4,19 @@ const app = express()
 import passport from 'passport';
 import session from 'express-session';
 import cors from 'cors';
-import { authRouter } from './routes/auth';
-import { eventRouter } from './routes/event';
+import { authRouter } from './routes/auth.js';
+import { eventRouter } from './routes/event.js';
 import path from 'path';
-import { prisma } from './lib/prisma';
+import { prisma } from './lib/prisma.js';
 import { Strategy as LocalStrategy } from 'passport-local';
 import bcrypt from 'bcrypt';
+import { fileURLToPath } from "url";
+import { coverPictureRouter } from './routes/upload.js';
+import bodyParser from 'body-parser';
+import morgan from 'morgan';
+import helmet from "helmet";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Passport Local Strategy
 passport.use(new LocalStrategy(async (username, password, done) => {
@@ -46,6 +53,9 @@ app.use(function (req, res, next) {
     next(); //pass to the next layer of middleware
 });
 
+app.use(morgan("combined"));
+app.use(helmet());
+
 app.use(cors({
     origin: '*',
     credentials: true
@@ -62,9 +72,12 @@ app.use(passport.initialize());
 // init passport on every route call.
 app.use(passport.session());
 // allow passport to use "express-session".
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
 app.use('/auth', authRouter);
 app.use('/events', eventRouter);
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/upload', coverPictureRouter);
+app.use('/files', express.static(path.join(__dirname, 'uploads')));
 
 app.listen(8080, () => console.log('IEEE RAS Server running.'));

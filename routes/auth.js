@@ -3,9 +3,12 @@ import path from "path";
 import fs from "fs";
 import bcrypt from "bcrypt";
 import { Router } from "express";
-import { prisma } from "../lib/prisma";
+import { prisma } from "../lib/prisma.js";
 import passport from "passport";
-import { isAdmin, isAuthenticated } from "../middlewares/auth";
+import { isAdmin, isAuthenticated } from "../middlewares/auth.js";
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const authRouter = Router();
 
@@ -104,13 +107,12 @@ authRouter.post("/logout", (req, res) => {
 });
 
 // Update route for admins
-authRouter.put("/update", isAuthenticated, isAdmin, async (req, res) => {
+authRouter.put("/update", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user.id; // `req.user` is populated by Passport
+
     const { username, email, password, profilePicture, coverPicture, RASmember, PoR } = req.body;
-
     const updatedData = {};
-
     if (username !== undefined) updatedData.username = username;
     if (email !== undefined) updatedData.email = email;
     if (password !== undefined) {
@@ -122,11 +124,9 @@ authRouter.put("/update", isAuthenticated, isAdmin, async (req, res) => {
     if (PoR !== undefined) updatedData.PoR = PoR;
 
     updatedData.lastUpdated = new Date();
-
     if (Object.keys(updatedData).length === 1 && updatedData.lastUpdated) {
       return res.status(400).json({ error: { message: "No fields provided for update." } });
     }
-
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: updatedData,
@@ -138,5 +138,50 @@ authRouter.put("/update", isAuthenticated, isAdmin, async (req, res) => {
     return res.status(500).json({ error: { message: "Internal Server Error." } });
   }
 });
+
+authRouter.post('/update_admins', isAuthenticated, isAdmin, (req, res) => {
+  // admin user names and the action: create or delete
+  const { admins, action } = req.body;
+  if (!action || !admins || !admins.length) {
+    res.status(400).json({ error: { message: "Invalid fields." } });
+    return;
+  }
+  try {
+    if (action == 'create') {
+      admins.forEach(async admin => {
+        await prisma.user.update({
+          where: { username: admin },
+          data: { isAdmin: true }
+        });
+      });
+      res.status(200).json({ message: `${admins.length} admins created.` });
+      return;
+    }
+    else if (action == 'delete') {
+      admins.forEach(async admin => {
+        await prisma.user.update({
+          where: { username: admin },
+          data: { isAdmin: false }
+        });
+      });
+      res.status(200).json({ message: `${admins.length} admins removed.` });
+      return;
+    }
+    else {
+      res.status(401).json({ error: { message: "Action field invaid" } })
+      return;
+    }
+  }
+  catch (err) {
+    res.status(500).json({ error: { message: `Could not update admin: ${err}` } });
+    console.error("Could not update admins: ", err);
+  }
+});
+
+// route to check if we are logged in or not
+authRouter.get('/isLoggedIn', isAuthenticated, (req, res) => {
+  res.status(200).json({ message: "Logged in." });
+});
+
 
 export { authRouter };
