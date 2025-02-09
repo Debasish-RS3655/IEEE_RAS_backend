@@ -1,9 +1,12 @@
 import multer from 'multer';
 import { Router } from 'express';
-import { prisma } from '../lib/prisma';
+import { prisma } from '../lib/prisma.js';
 import path from 'path';
 import fs from 'fs';
-import { isAdmin, isAuthenticated } from '../middlewares/auth';
+import { isAdmin, isAuthenticated } from '../middlewares/auth.js';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -23,13 +26,13 @@ const upload = multer({ storage });
 const coverPictureRouter = Router();
 
 // Endpoint for uploading cover pictures
-coverPictureRouter.post('/upload', isAdmin, isAuthenticated, upload.single('coverPicture'), async (req, res) => {
-    try {
-        const { userId } = req.body; // Assume user ID is sent in the request body
+coverPictureRouter.post('/file', isAdmin, isAuthenticated, upload.single('coverPicture'), async (req, res) => {
+    try {        
+        const userId = req.user.id; // Assume user ID is sent in the request body
         if (!req.file) {
             return res.status(400).json({ error: { message: 'No file uploaded.' } });
         }
-        const coverPicturePath = `/uploads/${req.file.filename}`; // Relative path to the file
+        const coverPicturePath = `/files/${req.file.filename}`; // Relative path to the file
 
         // Update the user's cover picture URL in the database
         const user = await prisma.user.update({
@@ -49,7 +52,7 @@ coverPictureRouter.post('/upload', isAdmin, isAuthenticated, upload.single('cove
 });
 
 // Endpoint to get all uploaded files
-coverPictureRouter.get('/files', isAdmin, isAuthenticated, (req, res) => {
+coverPictureRouter.get('/file', isAdmin, isAuthenticated, (req, res) => {
     try {
         const uploadPath = path.join(__dirname, '../uploads');
         if (!fs.existsSync(uploadPath)) {
@@ -58,7 +61,7 @@ coverPictureRouter.get('/files', isAdmin, isAuthenticated, (req, res) => {
 
         const files = fs.readdirSync(uploadPath).map(file => ({
             name: file,
-            path: `/uploads/${file}`,
+            path: `/files/${file}`,
         }));
 
         return res.status(200).json({ files });
@@ -69,7 +72,7 @@ coverPictureRouter.get('/files', isAdmin, isAuthenticated, (req, res) => {
 });
 
 // Endpoint to delete a file by its filename
-coverPictureRouter.delete('/files/:filename', isAdmin, isAuthenticated, (req, res) => {
+coverPictureRouter.delete('/file/:filename', isAdmin, isAuthenticated, (req, res) => {
     try {
         const { filename } = req.params;
         const filePath = path.join(__dirname, '../uploads', filename);
@@ -79,7 +82,6 @@ coverPictureRouter.delete('/files/:filename', isAdmin, isAuthenticated, (req, re
         }
 
         fs.unlinkSync(filePath); // Delete the file
-
         return res.status(200).json({ message: 'File deleted successfully.' });
     } catch (err) {
         console.error(err);

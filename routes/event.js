@@ -1,6 +1,6 @@
-import { prisma } from '../lib/prisma';
+import { prisma } from '../lib/prisma.js';
 import { Router } from 'express';
-import { isAuthenticated, isAdmin } from '../middlewares/auth'; // Assuming you have this middleware for authentication
+import { isAuthenticated, isAdmin } from '../middlewares/auth.js'; // Assuming you have this middleware for authentication
 
 const eventRouter = Router();
 
@@ -29,14 +29,13 @@ eventRouter.get('/:eventId', async (req, res) => {
 });
 
 // Create a new event (Admins only)
-eventRouter.post('/', isAuthenticated, isAdmin, async (req, res) => {
+eventRouter.post('/create', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const { title, description, image, lastUpdated } = req.body;
 
         if (!title || !description || !image || !lastUpdated) {
             return res.status(400).send({ error: { message: 'All fields are required.' } });
         }
-
         const newEvent = await prisma.event.create({
             data: {
                 title,
